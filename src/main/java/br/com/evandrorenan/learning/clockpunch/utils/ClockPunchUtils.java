@@ -1,4 +1,4 @@
-package br.com.evandrorenan.learning.clockpunch;
+package br.com.evandrorenan.learning.clockpunch.utils;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;

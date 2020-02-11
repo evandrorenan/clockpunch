@@ -1,4 +1,4 @@
-package br.com.evandrorenan.learning.clockpunch;
+package br.com.evandrorenan.learning.clockpunch.utils;
 
 public final class ViewConstants {
 	

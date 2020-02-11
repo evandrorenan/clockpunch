@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import br.com.evandrorenan.learning.clockpunch.ClockPunchUtils;
-import br.com.evandrorenan.learning.clockpunch.entity.Punch;
+import br.com.evandrorenan.learning.clockpunch.utils.ClockPunchUtils;
 import br.com.evandrorenan.learning.clockpunch.exception.PunchNotFoundException;
 import br.com.evandrorenan.learning.clockpunch.service.PunchDaoService;
+import br.com.evandrorenan.learning.clockpunch.service.PunchDto;
  
 @RestController
 public class PunchController {
@@ -37,15 +37,15 @@ public class PunchController {
 	private MessageSource messageSource;
 	
 	@GetMapping(path="/punches/{id}")
-	public Resource<Punch> getPunch(@PathVariable @Valid @Positive(message="{id_must_be_positive}") Long id) {
-		Punch punch = service.getPunchById(id);
+	public Resource<PunchDto> getPunch(@PathVariable @Valid @Positive(message="{id_must_be_positive}") Long id) {
+		PunchDto punch = service.getPunchById(id);
 
 		if (punch==null) {
 			throw new PunchNotFoundException("id:" + id);
 		}
 
 		//HATEOAS - Hypermedia as The Engine of Application State
-	    Resource<Punch> resource = new Resource<>(punch);
+	    Resource<PunchDto> resource = new Resource<>(punch);
 	    ControllerLinkBuilder linkTo = linkTo(methodOn(this.getClass()).getPunches());
 	    
 	    resource.add(linkTo.withRel(
@@ -55,14 +55,14 @@ public class PunchController {
 	}
 	
 	@GetMapping(path="/punches")
-	public List<Punch> getPunches(){
+	public List<PunchDto> getPunches(){
 
 		return service.getAllPunches();
 	}
 	
 	@PostMapping(path="/punches")
-	public ResponseEntity<Punch> setPunch(@Valid @RequestBody Punch punch) {
-		Punch savedPunch = service.savePunch(punch);
+	public ResponseEntity<PunchDto> setPunch(@Valid @RequestBody PunchDto punch) {
+		PunchDto savedPunch = service.savePunch(punch);
 		
 		URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
