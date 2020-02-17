@@ -22,30 +22,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import br.com.evandrorenan.learning.clockpunch.utils.ClockPunchUtils;
-import br.com.evandrorenan.learning.clockpunch.exception.PunchNotFoundException;
-import br.com.evandrorenan.learning.clockpunch.service.PunchDaoService;
 import br.com.evandrorenan.learning.clockpunch.service.PunchDto;
+import br.com.evandrorenan.learning.clockpunch.service.PunchService;
+import br.com.evandrorenan.learning.clockpunch.utils.ClockPunchUtils;
  
 @RestController
 public class PunchController {
 	
 	@Autowired
-	private PunchDaoService service;
+	private PunchService service;
 	
 	@Autowired
 	private MessageSource messageSource;
 	
 	@GetMapping(path="/punches/{id}")
 	public Resource<PunchDto> getPunch(@PathVariable @Valid @Positive(message="{id_must_be_positive}") Long id) {
-		PunchDto punch = service.getPunchById(id);
-
-		if (punch==null) {
-			throw new PunchNotFoundException("id:" + id);
-		}
+		
+		PunchDto punchDto = service.getPunchById(id);
 
 		//HATEOAS - Hypermedia as The Engine of Application State
-	    Resource<PunchDto> resource = new Resource<>(punch);
+	    Resource<PunchDto> resource = new Resource<>(punchDto);
 	    ControllerLinkBuilder linkTo = linkTo(methodOn(this.getClass()).getPunches());
 	    
 	    resource.add(linkTo.withRel(
@@ -56,18 +52,17 @@ public class PunchController {
 	
 	@GetMapping(path="/punches")
 	public List<PunchDto> getPunches(){
-
 		return service.getAllPunches();
 	}
 	
 	@PostMapping(path="/punches")
-	public ResponseEntity<PunchDto> setPunch(@Valid @RequestBody PunchDto punch) {
-		PunchDto savedPunch = service.savePunch(punch);
+	public ResponseEntity<PunchDto> setPunch(@Valid @RequestBody PunchDto punchDto) {
+		PunchDto savedPunchDto = service.setPunch(punchDto);
 		
 		URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest()
 			.path("/{id}")
-			.buildAndExpand(savedPunch.getId()).toUri();
+			.buildAndExpand(savedPunchDto.getId()).toUri();
 		
 		return ResponseEntity.created(location).build();
 	}

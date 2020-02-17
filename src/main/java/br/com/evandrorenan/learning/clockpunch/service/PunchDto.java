@@ -7,12 +7,14 @@ import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
 @NoArgsConstructor	//JPA expects a Simple Constructor in every class
+@AllArgsConstructor
 @ToString 
 public class PunchDto {
 	

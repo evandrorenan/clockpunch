@@ -2,46 +2,46 @@ package br.com.evandrorenan.learning.clockpunch.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import br.com.evandrorenan.learning.clockpunch.entity.Punch;
 import br.com.evandrorenan.learning.clockpunch.entity.PunchRepository;
+import br.com.evandrorenan.learning.clockpunch.exception.PunchNotFoundException;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Component
-@Repository
-@Transactional
-public class PunchDaoService {
+@Data
+@NoArgsConstructor
+public class PunchService {
+
+	@Autowired
+	private PunchRepository repository;
 	
 	@Autowired
-	private PunchRepository punchRepository;
+	private MessageSource messageSource;
 	
-	@PersistenceContext
-	private EntityManager entityManager; 
-
-	public List<PunchDto> getAllPunches(){
-		return convertPunchToDto(punchRepository.findAll());
-	}
-	
-	public PunchDto getPunchById(long id) {
-		Optional<Punch> punch = punchRepository.findById(id);
-		return convertPunchToDto(punch.orElse(null));
-	}
-	
-	public PunchDto savePunch(PunchDto punchDto) {
-		Punch punch = convertDtoToPunch(punchDto);
-		punchRepository.save(punch);
+	public PunchDto getPunchById(Long id) {
+		
+		Punch punch = repository.findById(id).orElseThrow(() ->
+			new PunchNotFoundException("id:" + id));
+		
 		return convertPunchToDto(punch);
+	}
+	
+	public List<PunchDto> getAllPunches(){
+		return convertPunchToDto(repository.findAll());
 	}	
+	
+	public PunchDto setPunch(PunchDto punchDto) {
+		Punch savedPunch = repository.save(convertDtoToPunch(punchDto));
+		return convertPunchToDto(savedPunch);
+	}
 	
 	private List<PunchDto> convertPunchToDto(List<Punch> punches){
 		List<PunchDto> punchDtoList = new ArrayList<>();
@@ -80,4 +80,5 @@ public class PunchDaoService {
 		modelMapper.map(punchDto, punch);
 		return punch;
 	}
+
 }
