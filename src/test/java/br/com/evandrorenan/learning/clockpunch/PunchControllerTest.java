@@ -1,42 +1,39 @@
 package br.com.evandrorenan.learning.clockpunch;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
 
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.RequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.evandrorenan.learning.clockpunch.controller.PunchController;
 import br.com.evandrorenan.learning.clockpunch.service.PunchDto;
-import br.com.evandrorenan.learning.clockpunch.service.PunchService;
 import br.com.evandrorenan.learning.clockpunch.utils.ClockPunchUtils;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes=ClockpunchApplication.class)
-@WebMvcTest(value=PunchController.class, secure=false)
+@SpringBootTest
+//@WebMvcTest(PunchController.class) 
+//@ContextConfiguration(classes= { 
+//		ClockpunchApplication.class,
+//		PunchControllerTest.class}) 
 public class PunchControllerTest extends ClockPunchTests {
 
 	private static final String BASE_PUNCH_URL = "/clockpunch/punches";
@@ -52,66 +49,96 @@ public class PunchControllerTest extends ClockPunchTests {
 			MOCK_LOCATION);
 
 	@Autowired
-	private MockMvc mockMvc;
+	private WebApplicationContext webApplicationContext;
 	
-	@Mock
-	private PunchService service;
+	private MockMvc mockMvc;	
 	
+//	@Autowired
+//	private PunchService service;
+//	
 	private MvcResult lastResult;
 	
+//	@Before
+//	public void setUp() {
+//		mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+//	}
+//	
+
 	@Test
-	public void setPunchTest() throws Exception {
+	public void getPunchesReal() throws Exception {
+
+		HttpUriRequest request = new HttpGet("http://localhost:9080/clockpunch/punches");
 		
-		Mockito.when(service.setPunch(Mockito.any(PunchDto.class)))
-			   .thenReturn(MOCK_PUNCH_DTO);
+		HttpResponse httpResponse = HttpClientBuilder.create().build().execute(request);
+		
+		assertEquals(HttpStatus.OK.value(), httpResponse.getStatusLine().getStatusCode());
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		
-		MockHttpServletResponse response = performRequest(
-				POST, new URI(BASE_PUNCH_URL), null, objectMapper.writeValueAsString(MOCK_PUNCH_DTO));
-		
-		assertEquals(HttpStatus.CREATED.value(), response.getStatus());
-		assertTrue(response.getHeader(HttpHeaders.LOCATION).contains("/punches/"));
-		
-		getPunchTest();
-	}
-	
-	@Test
-	public void getPunchTest() throws Exception {
+		List<PunchDto> punches = new ArrayList<PunchDto>();
 
-		MockHttpServletResponse response = performRequest(
-				GET, new URI(lastResult.getResponse().getHeader(HttpHeaders.LOCATION)), null, null);
+		punches.add(MOCK_PUNCH_DTO);
 		
-		ObjectMapper objectMapper = new ObjectMapper();
-		JSONAssert.assertEquals(objectMapper.writeValueAsString(MOCK_PUNCH_DTO), response.getContentAsString(), false);
+		JSONAssert.assertEquals(
+				objectMapper.writeValueAsString(punches), 
+				EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8.displayName()), 
+				false);
 	}
 	
-	private MockHttpServletResponse performRequest(HttpMethod method, URI uri, MediaType mediaType, String content) throws Exception {
-		
-		RequestBuilder requestBuilder;
-		
-		switch (method) {
-		case GET:
-			requestBuilder = MockMvcRequestBuilders
-			.get		(uri)
-			.accept		(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType)
-			.contentType(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType);
-			break;
-			
-		case POST:
-			requestBuilder = MockMvcRequestBuilders
-			.post		(uri)
-			.accept		(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType)
-				.content(content)
-			.contentType(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType);
-			break;
-			
-		default:
-			return null;
-		}
-		
-		lastResult = mockMvc.perform(requestBuilder).andReturn();
-		
-		return lastResult.getResponse();
-	}
+//	@Test
+//	public void setPunchTest() throws Exception {
+//		
+//		Mockito.when(service.setPunch(Mockito.any(PunchDto.class)))
+//			   .thenReturn(MOCK_PUNCH_DTO);
+//
+//		ObjectMapper objectMapper = new ObjectMapper();
+//		
+//		MockHttpServletResponse response = performRequest(
+//				POST, new URI(BASE_PUNCH_URL), null, objectMapper.writeValueAsString(MOCK_PUNCH_DTO));
+//		
+//		assertEquals(HttpStatus.CREATED.value(), response.getStatus());
+//		assertTrue(response.getHeader(HttpHeaders.LOCATION).contains("/punches/"));
+//		
+//		getPunchTest();
+//	}
+//	
+//	@Test
+//	public void getPunchTest() throws Exception {
+//
+//		MockHttpServletResponse response = performRequest(
+//				GET, new URI(lastResult.getResponse().getHeader(HttpHeaders.LOCATION)), null, null);
+//		
+//		ObjectMapper objectMapper = new ObjectMapper();
+//		JSONAssert.assertEquals(objectMapper.writeValueAsString(MOCK_PUNCH_DTO), response.getContentAsString(), false);
+//	}
+//	
+//	private MockHttpServletResponse performRequest(HttpMethod method, URI uri, MediaType mediaType, String content) throws Exception {
+//		
+//		RequestBuilder requestBuilder;
+//		
+//		switch (method) {
+//		case GET:
+//			requestBuilder = MockMvcRequestBuilders
+//			.get		(uri)
+//			.accept		(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType)
+//			.contentType(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType);
+//			break;
+//			
+//		case POST:
+//			requestBuilder = MockMvcRequestBuilders
+//			.post		(new URI("http://localhost:9080/clockpunch/punches"))
+//			.characterEncoding(StandardCharsets.UTF_8.displayName())
+//			.contentType(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType)
+//			.content(content)
+//			.accept		(mediaType == null 	? MediaType.APPLICATION_JSON : mediaType);
+//			break;
+//			
+//		default:
+//			return null;
+//		}
+//		
+//		lastResult = mockMvc.perform(requestBuilder).andReturn();
+//		
+//		return lastResult.getResponse();
+//	}
 }
